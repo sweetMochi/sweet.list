@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Sweet List</title>
+	<style>
+		body { overflow-y: scroll }
+		select,
+		[type=text] {
+			display: inline-block;
+			height: 30px;
+			vertical-align: middle;
+			box-sizing: border-box;
+			font-size: 1.5em;
+			margin: 2% 0;
+			margin-left: -1px;
+			text-indent: 1em;
+			border: solid 1px #ccc
+		}
+		[type=text] {
+			width: 50%;
+			height: 30px
+		}
+		h1 { padding-top: 20px }
+		label { cursor: pointer }
+		small { float: right; user-select: none }
+		small input {
+			vertical-align: middle;
+			margin-top: 0;
+			cursor: pointer;
+		}
+		select { width: 20%; height: 30px }
+		table {
+			table-layout: auto;
+			width: 800px;
+			border-right: 1px solid #c5dbec;
+			border-collapse: collapse;
+			text-align: center;
+			border: 1px solid #c5dbec;
+			margin: 0 auto;
+		}
+		table th,
+		table td {
+			position: relative;
+			border: 1px solid #c5dbec;
+			font-size: 1em;
+			padding: 5px;
+		}
+		table th {
+			background-color: #dfeffc;
+			color: #2e6e9e;
+		}
+		table tr td {
+			color: #222;
+			font-size: 0.9em;
+		}
+		tbody tr { display: none }
+		tbody tr:hover td { background-color: #d0e5ff }
+		tbody .list-show { display: table-row }
+		tbody .list-even td { background-color: #e5ecf9 }
+		tbody .list-offline td { color: #ccc }
+		tbody .list-empty { font-size: 1.5em; }
+		.option-hide { display: none }
+	</style>
+</head>
+<body>
+
+	<table>
+		<thead>
+			<tr><td colspan="5">
+				<h1>Sweet List</h1>
+				<small><label><input type="checkbox" data-offline="">Show hidden data</label></small>
+			</td></tr>
+			<tr><td colspan="5">
+				<select data-select="cooper_id">
+					<option value="">All Company</option>
+					<option value="c001">FunFun</option>
+					<option value="c002">Com</option>
+				</select>
+				<select data-select="game_type">
+					<option value="">All</option>
+					<option value="mobile">Mobile</option>
+					<option value="web">Web</option>
+					<option value="client">Client</option>
+				</select>
+				<input data-search="" type="text" placeholder="Search by Name, code and abbr">
+			</td></tr>
+			<tr>
+				<th>Company</th>
+				<th>Code</th>
+				<th>ID</th>
+				<th>Name</th>
+				<th>Abbr</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr class="list-offline" data-list="" data-cooper_id="c001" data-game_type="web" data-offline="1" data-select_hide="1" data-text="A0001 10001 Game Name ABC ga">
+				<td>FunFun</td>
+				<td>A0001</td>
+				<td>10001</td>
+				<td>Game Name ABC</td>
+				<td>ga</td>
+			</tr><tr class="list-offline" data-list="" data-cooper_id="c001" data-game_type="web" data-offline="1" data-select_hide="1" data-text="A0002 10002 Game Name EFG ge">
+				<td>FunFun</td>
+				<td>A0002</td>
+				<td>10002</td>
+				<td>Game Name EFG</td>
+				<td>ge</td>
+			</tr><tr class="list-show" data-list="" data-cooper_id="c002" data-game_type="web" data-offline="0" data-select_hide="0" data-text="B0001 1003 Game Name XYZ gx">
+				<td>Com</td>
+				<td>B0001</td>
+				<td>10003</td>
+				<td>Game Name XYZ</td>
+				<td>gx</td>
+			</tr><tr class="list-empty" data-list-empty=""><td colspan="5">Not Found _(:3</td></tr>
+		</tbody>
+	</table>
+	<script>
+
+		// Use ES6
+
+		let $_search = document.querySelector("[data-search]")
+		let $_select = document.querySelectorAll("[data-select]")
+		let $_offline = document.querySelector("[data-offline]")
+
+		let $_list = document.querySelectorAll("[data-list]")
+		let $_list_empty = document.querySelector("[data-list-empty]")
+
+		let user_select = {}
+
+		$_offline.onchange = () => {
+			user_select.offline = $_offline.checked ? "" : 0
+			$_select[0].onchange()
+		}
+
+		$_select.forEach((val) => {
+			val.onchange = function () {
+
+				userSelect.init()
+				$_search.value = ""
+
+				let index = listTr.reset()
+
+				$_list.forEach((item) => {
+
+					let show = false
+
+					Object.keys(user_select).some((select_name) => {
+
+						const select_val = user_select[select_name]
+						const item_val = item.dataset[select_name]
+
+						show = select_val === "" || select_val == item_val ? true : false
+
+						//console.log(select_val + ":" + item_val + ":" + item.dataset.app_sign + ":" + show)
+
+						if ( !show ) return true
+
+					})
+
+					item.dataset.select_hide = show ? 0 : 1
+					listTr.switch(show, item)
+					index = listTr.init(item)
+
+				})
+
+				listTr.notFound(index)
+
+			}
+		})
+
+		$_search.oninput = function() {
+
+			userSelect.init()
+			let index = listTr.reset()
+			const target = this.value
+
+			if ( target != "" ) {
+
+				$_list.forEach((val) => {
+
+					const item = val
+					const text = item.dataset.text
+					const select_hide = item.dataset.select_hide == 1 ? true : false
+					const show = !select_hide && text.indexOf(target) > 0 ? true : false
+
+					listTr.switch(show, item)
+					index = listTr.init(item)
+
+				})
+
+			} else {
+				$_list.forEach((val) => {
+					const item = val
+					const select_hide = item.dataset.select_hide == 1 ? true : false
+
+					if ( !select_hide ) {
+						listTr.show(item)
+						index = listTr.init(item)
+					}
+
+				})
+			}
+
+			listTr.notFound(index, $_list_empty)
+
+		}
+
+		let userSelect = {
+			init: () => {
+				user_select = {
+					"offline" : $_offline.checked ? "" : 0
+				}
+				$_select.forEach((item) => {
+					user_select[item.dataset.select] = item.value
+				})
+			}
+		}
+		userSelect.init()
+
+		let listTr = {
+			num: 0,
+			init: (item) => {
+
+				item.classList.remove("list-even")
+				const display = window.getComputedStyle(item).display
+				if ( display != "none" ) {
+
+					if ( num % 2 ) {
+						item.classList.add("list-even")
+					}
+					this.num ++
+				}
+				return this.num
+			},
+			reset: () => {
+				this.num = 0
+				return 0
+			},
+			show: (item) => { item.classList.add("list-show") },
+			hide: (item) => { item.classList.remove("list-show") },
+			switch: (show, item) => {
+				if ( show ) {
+					listTr.show(item)
+				} else {
+					listTr.hide(item)
+				}
+			},
+			notFound: (num) => {
+				if ( num == 0 ) { listTr.show($_list_empty) }
+				else { listTr.hide($_list_empty) }
+			}
+		}
+
+		// console.log()
+
+	</script>
+</body>
+</html>
+
+
